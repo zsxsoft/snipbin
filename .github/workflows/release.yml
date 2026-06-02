@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist
+          platforms=(
+            "linux/amd64"
+            "linux/arm64"
+            "linux/386"
+            "linux/arm"
+            "linux/riscv64"
+            "linux/ppc64le"
+            "linux/s390x"
+            "linux/mips64le"
+            "linux/loong64"
+            "darwin/amd64"
+            "darwin/arm64"
+            "windows/amd64"
+            "windows/arm64"
+            "windows/386"
+            "freebsd/amd64"
+            "freebsd/arm64"
+          )
+          for platform in "${platforms[@]}"; do
+            GOOS="${platform%%/*}"
+            GOARCH="${platform##*/}"
+            output="dist/snipbin-${GOOS}-${GOARCH}"
+            if [ "$GOOS" = "windows" ]; then
+              output="${output}.exe"
+            fi
+            echo "Building $platform -> $output"
+            GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o "$output" .
+          done
+          ls -la dist/
+
+      - name: Package binaries
+        run: |
+          cd dist
+          for file in snipbin-*; do
+            if [[ "$file" == *.exe ]]; then
+              name="${file%.exe}"
+              zip "${name}.zip" "$file"
+            else
+              tar czf "${file}.tar.gz" "$file"
+            fi
+          done
+          rm -f snipbin-*
+          ls -la
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

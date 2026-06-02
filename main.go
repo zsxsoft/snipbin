@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"runtime"
 	"sync"
 	"time"
 
@@ -31,10 +32,13 @@ const (
 	maxTTL          = 24 * time.Hour
 	minTTL          = 1 * time.Minute
 	maxFileSize     = 100 << 20 // 100MB
-	shmThreshold    = 1 << 20   // 1MB — smaller files go to /dev/shm
-	shmBaseDir      = "/dev/shm/snipbin"
-	tmpBaseDir      = "/tmp/snipbin"
+	shmThreshold    = 1 << 20   // 1MB — smaller files go to memory if available
 	cleanupInterval = 1 * time.Minute
+)
+
+var (
+	shmBaseDir = "/dev/shm/snipbin"
+	tmpBaseDir = filepath.Join(os.TempDir(), "snipbin")
 )
 
 var (
@@ -498,13 +502,15 @@ func main() {
 	}
 	baseURL = os.Getenv("BASE_URL")
 
-	// Probe /dev/shm writability
-	if err := os.MkdirAll(shmBaseDir, 0777); err == nil {
-		probe := filepath.Join(shmBaseDir, ".probe")
-		if f, err := os.Create(probe); err == nil {
-			f.Close()
-			os.Remove(probe)
-			shmWritable = true
+	// Probe /dev/shm writability (Linux only)
+	if runtime.GOOS == "linux" {
+		if err := os.MkdirAll(shmBaseDir, 0777); err == nil {
+			probe := filepath.Join(shmBaseDir, ".probe")
+			if f, err := os.Create(probe); err == nil {
+				f.Close()
+				os.Remove(probe)
+				shmWritable = true
+			}
 		}
 	}
 	os.MkdirAll(tmpBaseDir, 0777)
