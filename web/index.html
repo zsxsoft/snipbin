@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnipBin</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Snip<span>Bin</span></h1>
+      <p class="subtitle">文件 & 文本短链分享 · 自动过期</p>
+    </header>
+
+    <main>
+      <section class="upload-section">
+        <div id="drop-zone" class="drop-zone">
+          <div class="drop-zone-inner">
+            <svg class="upload-icon" viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 16V4m0 0L8 8m4-4 4 4"/>
+              <path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"/>
+            </svg>
+            <p id="drop-label">拖拽文件到这里，或点击上传</p>
+            <p class="hint">也可以 Ctrl+V 粘贴文本 / 文件</p>
+          </div>
+          <input type="file" id="file-input" hidden>
+        </div>
+
+        <div class="text-input-area">
+          <textarea id="text-input" placeholder="或在此粘贴文本内容..." rows="4" spellcheck="false"></textarea>
+        </div>
+
+        <div class="options-row">
+          <div class="option-group">
+            <span class="option-label">过期:</span>
+            <select id="ttl-select">
+              <option value="1h" selected>1 小时</option>
+              <option value="2h">2 小时</option>
+              <option value="6h">6 小时</option>
+              <option value="12h">12 小时</option>
+              <option value="24h">24 小时</option>
+            </select>
+          </div>
+          <button id="upload-btn" class="btn-primary" disabled>上传</button>
+        </div>
+      </section>
+
+      <section id="result-section" class="result-section hidden">
+        <div class="result-card">
+          <div class="result-header">
+            <span class="result-badge">&#10003; 已创建</span>
+          </div>
+          <div class="result-link-row">
+            <input id="result-link" type="text" readonly>
+            <button id="copy-btn" class="btn-copy">复制</button>
+          </div>
+          <p class="result-meta" id="result-meta"></p>
+        </div>
+      </section>
+
+      <section class="cli-section">
+        <div class="section-header" id="cli-toggle">
+          <span class="section-hash">$</span> curl 使用方法 <span class="toggle-hint" id="cli-hint">[展开]</span>
+        </div>
+        <div class="cli-content" id="cli-content">
+          <div class="cli-block">
+            <p class="cli-desc">分享文本</p>
+            <pre><code>echo "hello world" | curl -T - <span class="cli-host"></span>/</code></pre>
+          </div>
+          <div class="cli-block">
+            <p class="cli-desc">分享文件（自动保留文件名）</p>
+            <pre><code>curl -T file.txt <span class="cli-host"></span>/file.txt</code></pre>
+          </div>
+          <div class="cli-block">
+            <p class="cli-desc">自定义文件名</p>
+            <pre><code>curl -T data.csv -H 'X-Filename: report.csv' <span class="cli-host"></span>/</code></pre>
+          </div>
+          <div class="cli-block">
+            <p class="cli-desc">设置过期时间</p>
+            <pre><code>curl -T file.txt -H "X-TTL: 6h" <span class="cli-host"></span>/</code></pre>
+          </div>
+          <div class="cli-block">
+            <p class="cli-desc">wget 上传文件</p>
+            <pre><code>wget --method=PUT --body-file=file.txt -qO- <span class="cli-host"></span>/</code></pre>
+          </div>
+          <div class="cli-block">
+            <p class="cli-desc">返回内容</p>
+            <pre><code>http://localhost:8080/s/a3f
+
+# 加 ?format=json 获取详细信息
+curl -T file.txt "<span class="cli-host"></span>/?format=json"
+{"id":"a3f","url":"...","expiresAt":"..."}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="recent-section">
+        <div class="section-header">
+          <span class="section-hash">#</span> 最近分享
+        </div>
+        <div id="recent-list" class="recent-list">
+          <p class="empty-hint">暂无记录</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>snipbin · ephemeral sharing</footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
