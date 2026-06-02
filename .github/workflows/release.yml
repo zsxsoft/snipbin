@@ -57,14 +57,17 @@ jobs:
         run: |
           cd dist
           for file in snipbin-*; do
+            if [[ "$file" == *.tar.gz || "$file" == *.zip ]]; then
+              continue
+            fi
             if [[ "$file" == *.exe ]]; then
               name="${file%.exe}"
               zip "${name}.zip" "$file"
             else
               tar czf "${file}.tar.gz" "$file"
             fi
+            rm "$file"
           done
-          rm -f snipbin-*
           ls -la
 
       - name: Create Release
